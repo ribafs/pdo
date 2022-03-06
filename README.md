@@ -1,2 +1,3 @@
-# php-pdo
-Dicas e exemplos de PDO/PHP
+# PDO
+Vários projetos em PHP com PDO
+
