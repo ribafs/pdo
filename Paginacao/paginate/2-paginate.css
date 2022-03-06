@@ -1,0 +1,23 @@
+/* (A) PAGINATION SQUARES */
+.pagination a, .pagination div {
+  display: inline-block;
+  text-decoration: none;
+  color: #555;
+  padding: 10px;
+  border: 1px solid #ccc;
+  margin: 5px;
+}
+
+/* (B) ON HOVER */
+.pagination a:hover, .pagination div:hover {
+  cursor: pointer;
+  color: #fff;
+  background: #4680db;
+}
+
+/* (C) HIGHLIGHT CURRENT PAGE */
+.pagination a.current, .pagination div.current {
+  font-weight: bold;
+  color: #000;
+  background: #fffc9b;
+}

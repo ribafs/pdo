@@ -1,0 +1,9 @@
+$sth->execute(array(
+"id" => $id,
+"name" => $_POST['name'], 
+"birthday"=>$_POST['birthday'], 
+"phone"=>$_POST['phone'], 
+"observation"=>$_POST['observation'], 
+"created"=>$_POST['created']
+));
+

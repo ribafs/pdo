@@ -1,0 +1,134 @@
+Handling connection errors
+
+MySQL
+<?php
+try {
+$dbhost = 'localhost';
+$dbuser = 'roott';
+$dbpass = '';
+$dbh = new PDO('mysql:host=$dbhost;dbname=hr', $dbuser, $dbpass);
+}catch (PDOException $e){
+ echo "Error!: " . $e->getMessage() . "<br/>";
+ die();
+ }
+?>
+
+Output:
+Error : SQLSTATE[28000] [1045] Access denied for user 'roott'@'localhost' (using password: NO)
+
+PostgreSQL:
+Here the database name is wrong.
+
+<?php
+$dbuser = 'postgress';
+$dbpass = 'abc123';
+$host = 'localhost';
+$dbname='postgres';
+$dbh = new PDO("pgsql:host=$host;dbname=$dbname", $dbuser, $dbpass);
+}catch (PDOException $e){
+echo "Error : " . $e->getMessage() . "<br/>";
+die();
+}
+?>
+
+PDO::errorInfo 
+Retrieves extended error information associated with the last operation on the database handle.
+Syntax:
+array PDO::errorInfo();
+Return Value:
+An array of error information about the last operation performed by this database handle. The array consists of the following fields:
+0 : The SQLSTATE error code.
+1 : The driver-specific error code.
+2 : The driver-specific error message.
+Example:
+In the following example (PostgreSQL database is used), the name of the column is misspelled (genderr instead of gender), causing an error, which is then reported.
+<?php
+try{
+$dbuser = 'postgres';
+$dbpass = 'abc123';
+$host = 'localhost';
+$dbname='postgres';
+$connec = new PDO("pgsql:host=$host;dbname=$dbname", $dbuser, $dbpass);
+}
+catch (PDOException $e)
+{
+echo "Error : " . $e->getMessage() . "<br/>";
+die();
+} 
+$query = "SELECT * FROM user_details where genderr='M'";
+$connec->query($query);
+echo $connec->errorCode();
+print_r ($connec->errorInfo()); 
+?>
+Copy
+Output:
+42703Array ( [0] => 42703 [1] => 7 [2] => ERROR: column "genderr" does not exist LINE 1: SELECT * FROM user_details where genderr='M' ^ )
+
+PDOStatement::errorCode
+Fetch the SQLSTATE of the most recent operation on the database statement object.
+Syntax:
+ public string PDOStatement::errorCode ( void )
+Return Value:
+Same to PDO::errorCode(), except that PDOStatement::errorCode() only retrieves error codes for operations performed with PDOStatement objects.
+Example - 1: 
+In the following example, SQL query has an error (wrong column name). errorCode() displays the error.
+<?php
+try {
+$dbhost = 'localhost';
+$dbname='hr';
+$dbuser = 'root';
+$dbpass = '';
+$conn = new PDO("mysql:host=$dbhost;dbname=$dbname", $dbuser, $dbpass);
+}catch (PDOException $e) 
+{
+echo "Error : " . $e->getMessage() . "<br/>";
+die();
+}
+$stmt = $conn->prepare('SELECT fname, tname FROM user_details');
+$stmt->execute();
+echo "PDOStatement::errorCode(): "."<br>";
+print_r ($stmt->errorcode());
+?>
+
+PDOStatement::errorInfo
+Retrieves error information associated with the last operation on the statement handle.
+Syntax:
+array PDOStatement::errorInfo ( void )
+Parameters:
+Name
+Description
+Type
+parameter
+Parameter identifier. For a prepared statement using named placeholders, this will be a parameter name of the form :name.
+mixed
+value
+The value to bind to the parameter.
+mixed
+data_type
+Optional, PDO::PARAM_* constant. 
+int
+Return Value:
+PDOStatement::errorInfo() returns an array of error information about the last operation performed by this statement handle. The array consists of the following fields:
+0 - The SQLSTATE error code.
+1 - The driver-specific error code.
+2 - The driver-specific error message.
+Example - 1 : 
+In the following example, SQL statement has an error, which is displayed by errorinfo(). 
+<?php
+try {
+$dbhost = 'localhost';
+$dbname='hr';
+$dbuser = 'root';
+$dbpass = '';
+$conn = new PDO("mysql:host=$dbhost;dbname=$dbname", $dbuser, $dbpass);
+}catch (PDOException $e) 
+{
+echo "Error : " . $e->getMessage() . "<br/>";
+die();
+}
+$stmt = $conn->prepare('SELECT fname, tname FROM user_details');
+$stmt->execute();
+print_r ($stmt->errorInfo());
+?>
+
+

@@ -1,0 +1,50 @@
+Parâmetros do PDO
+
+Inteiros
+PDO::PARAM_INT
+
+Strings
+PDO::PARAM_STR
+
+Strings de tamanho 12
+PDO::PARAM_STR, 12
+
+Boolean
+PDO::PARAM_BOOL
+
+Nulos
+PDO::PARAM_NULL
+
+
+Para melhorar a segurança configure
+$dbh->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+
+$options = [
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_PERSISTENT => false,
+    PDO::ATTR_EMULATE_PREPARES => true,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES $charset COLLATE $collate"
+];
+
+try {
+     $pdo = new PDO($dsn, $user, $pass, $options);
+} catch (\PDOException $e) {
+     throw new \PDOException($e->getMessage(), (int)$e->getCode());
+}
+
+Ou usando o método setAttribute:
+
+<?php
+$db = new PDO('mysql:host=localhost;dbname=testdb;charset=utf8mb4', 'username', 'password');
+$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$db->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+
+PDO::FETCH_ASSOC
+PDO::FETCH_BOTH (default)
+PDO::FETCH_OBJ
+
+https://www.php.net/manual/pt_BR/pdostatement.fetch.php

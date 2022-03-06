@@ -1,0 +1,46 @@
+/*you can change you table style here*/ 
+.header{
+    background-color: #05932e;/*#3f0505;*/
+    color: #fff;
+}
+.header a {
+    color: #fff;
+}
+
+.header a:hover {
+    color: #D9EDF7;
+}
+
+.footer {
+    width: 100%;
+    border-top: 1px solid #E0E0E0;
+    position: fixed;
+    bottom: 0px; 
+    left: 0px; 
+    text-align: center; 
+}
+
+.page-nav{
+    margin: 5px 0 0 0;
+    padding: 3px;
+}
+ 
+.page-nav a{
+    border: none;
+    padding: 2px;
+    text-decoration: none;
+    border: 3px solid #DFF0D8;
+    background-color: #D9EDF7;
+    color: #000;
+}
+ 
+.page-nav a:hover{
+    border: thin solid #FC0;
+    background-color: #05932e;
+    color: #fff;
+}
+ 
+/*this is the style for selected page number*/
+.page_link{
+    padding: 5px;
+}

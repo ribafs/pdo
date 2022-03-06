@@ -1,0 +1,110 @@
+
+
+Well No, there is none!
+
+Technically there is PDO::quote() but it is rarely ever used and is not the equivalent of mysql_real_escape_string()
+
+That's right! If you are already using PDO the proper way as documented using prepared statements, then it will protect you from MySQL injection.
+# Example:
+
+Below is an example of a safe database query using prepared statements (pdo)
+
+  try {
+     // first connect to database with the PDO object. 
+     $db = new \PDO("mysql:host=localhost;dbname=xxx;charset=utf8", "xxx", "xxx", [
+       PDO::ATTR_EMULATE_PREPARES => false, 
+       PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+     ]); 
+ } catch(\PDOException $e){
+     // if connection fails, show PDO error. 
+   echo "Error connecting to mysql: " . $e->getMessage();
+ }
+
+And, now assuming the connection is established, you can execute your query like this.
+
+if($_POST && isset($_POST['color'])){ 
+
+    // preparing a statement
+    $stmt = $db->prepare("SELECT id, name, color FROM Cars WHERE color = ?");
+
+    // execute/run the statement. 
+    $stmt->execute(array($_POST['color']));
+
+    // fetch the result. 
+    $cars = $stmt->fetchAll(\PDO::FETCH_ASSOC); 
+    var_dump($cars); 
+ }
+
+Now, as you can probably tell, I haven't used anything to escape/sanitize the value of $_POST["color"]. And this code is secure from myql-injection thanks to PDO and the power of prepared statements.
+
+It is worth noting that you should pass a charset=utf8 as attribute, in your DSN as seen above, for security reasons, and always enable PDO to show errors in the form of exceptions.
+
+PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+
+so errors from you database queries won't reveal sensitive data like your directory structure, database username etc.
+
+Last but not least, there are moments when you should not trust PDO 100%, and will be bound to take some extra measures to prevent sql injection, one of those cases is, if you are using an outdated versions of mysql [ mysql =< 5.3.6 ] as described in this answer
+
+But, using prepared statements as shown above will always be safer, than using any of the functions that start with mysql_
+
+Good reads
+================
+
+
+As Ian stated above is one way, or if your not utilizing the prepare function then you could just do:
+
+$sth = $PDO->query("SELECT id, firstname, lastname FROM table");
+
+if ($sth->rowCount() > 1) {
+    // One way to get the results if you have more then one row
+    foreach ($sth as $row) {
+        echo "ID: ".$row['id']."\n";
+        echo "First name: ".$row['firstname']."\n";
+        echo "Last name: ".$row['lastname']."\n";
+    }
+} elseif ($sth->rowCount() == 1) {
+    // Or this way if you just have one row
+    $result = $sth->fetch(PDO::FETCH_ASSOC);
+
+    echo "ID: ".$result['id']."\n";
+    echo "First name: ".$result['firstname']."\n";
+    echo "Last name: ".$result['lastname']."\n";
+}
+
+
+$query = $PDO->prepare("SELECT id, firstname, lastname FROM table");
+$query->execute();
+$res = $query->fetchAll(PDO::FETCH_ASSOC);
+var_dump($res);
+
+==== update in response to comment ====
+
+$query = $PDO->prepare("SELECT id, firstname, lastname FROM table");
+$query->execute();
+$people = $query->fetchAll(PDO::FETCH_CLASS, 'stdClass');
+foreach($people as $person) {
+    echo 'ID: ' . $person->id . PHP_EOL .
+         'First Name: ' . $person->firstname . PHP_EOL .
+         'Last Name: ' . $person->lastname . PHP_EOL;
+} 
+=========
+Em PDO podes obter o resultado da contagem da seguinte forma:
+
+$sql = "SElECT COUNT('id') FROM anuncios WHERE categoria=:categoria AND estado=1"; 
+
+$result = $con->prepare($sql); 
+
+$result->execute(array(':categoria' => $categoria)); 
+
+$contagem = $result->fetchColumn();
+
+echo $contagem; 
+
+O apresentado em cima pode ainda ser sintetizado para o em baixo apresentado se não estivermos a lidar com dados do usuário:
+
+$sql = "SElECT COUNT('id') FROM anuncios WHERE categoria='bubu' AND estado=1"; 
+
+$contagem = $pdo->query($sql)->fetchColumn(); 
+
+echo $contagem;
+

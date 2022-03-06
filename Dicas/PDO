@@ -1,0 +1,262 @@
+PDO - PHP Data Objects
+https://www.php.net/manual/en/book.pdo.php
+
+Como a maioria das aplicações usa bancos de dados, então conheçamos melhor o PDO.
+
+É uma extensão do PHP para conexão com diversos SGBDs:
+https://www.php.net/manual/en/pdo.drivers.php
+A grande maioria dos SGBDs tem suporte ao PHP através do PDO e seu driver deve ser instalado para o devido suporte. Geraalmente já vem no php.ini  comentado. Apenas descomente e reinicie o servidor web.
+
+Para saber que drivers do PDO já estão habilitados em seu sistema execute:
+<?php
+print_r(PDO::getAvailableDrivers());
+
+Via terminal
+php -i | grep 'pdo'
+
+ou
+<?php
+phpinfo();
+
+Instalação
+
+Todos os pacotes for windows já vem com o PDO
+No máximo precisará descomentar no php.ini e reiniciar o Apache
+
+No Linux
+sudo apt install php7.4-pdo
+sudo apt install php7.4-pdo-mysql
+sudo apt install php7.4-pdo-pgsql
+sudo apt install php7.4-pdo-sqlite
+sudo apt install php7.4-pdo-odbc
+
+PDO forma uma camada que separa o banco de dados do seu código PHP.
+
+Apareceu na versão 5.1 do PHP com uma extensão PECL. Como requer recursos de OO não deve rodar em versões anteriores do PHP.
+
+Constantes predefinidas:
+https://www.php.net/manual/en/pdo.constants.php
+
+Conexão
+https://www.php.net/manual/en/pdo.connections.php
+
+Transações
+https://www.php.net/manual/en/pdo.transactions.php
+
+Prepared statements/Declarações preparadas
+https://www.php.net/manual/en/pdo.prepared-statements.php
+Exemplo:
+$stmt = $dbh->prepare("INSERT INTO REGISTRY (name, value) VALUES (:name, :value)");
+$stmt->bindParam(':name', $name);
+$stmt->bindParam(':value', $value);
+Este exemplo executa uma consulta insert substituindo name e value pelos nomeados placeholders :name e :value
+
+Vantagens: quando usamos prepared statments o PDO se encarrega de escaping e quoting os valores recebidos do usuário, tornando assim nosso código mais seguro.
+
+Manipulação de erros
+https://www.php.net/manual/en/pdo.error-handling.php
+
+Singleton - padrão de projeto para garantir que somente uma conexão por banco de dados seja efetuada
+
+Conexão simples
+
+$connection = new PDO('mysql:host=localhost;dbname=teste;charset=utf8', 'root', 'root');
+
+Insert
+$connection->exec('INSERT INTO users VALUES (1, "somevalue"');
+
+$affectedRows = $connection->exec('INSERT INTO users VALUES (1, "somevalue"');
+echo $affectedRows;
+
+Select
+
+$result = mysql_query('SELECT * FROM users');
+
+while($row = mysql_fetch_assoc($result)) {
+    echo $row['id'] . ' ' . $row['name'];
+}
+
+foreach($connection->query('SELECT * FROM users') as $row) {
+    echo $row['id'] . ' ' . $row['name'];
+}
+
+Minha constante preferida
+PDO::FETCH_OBJ: returns an anonymous object with property names that correspond to the column names returned in your result set. For example, $row->id would hold the value of the id column. 
+
+$statement = $connection->query('SELECT * FROM users');
+
+while($row = $statement->fetch(PDO::FETCH_ASSOC)) {
+    echo $row['id'] . ' ' . $row['name'];
+}
+
+$statement = $connection->query('SELECT * FROM users');
+
+while($row = $statement->fetch(PDO::FETCH_OBJ)) {
+    echo $row->id . ' ' . $row->name;
+}
+
+The PDO exec() executes an SQL statement and returns the number of affected rows. 
+affected_rows.php
+<?php
+
+$dsn = "mysql:host=localhost;dbname=mydb";
+$user = "user12";
+$passwd = "12user";
+
+$pdo = new PDO($dsn, $user, $passwd);
+
+$id = 12;
+
+$nrows = $pdo->exec("DELETE FROM countries WHERE id IN (1, 2, 3)");
+
+echo "The statement affected $nrows rows\n";
+
+transaction.php
+<?php
+
+$dsn = "mysql:host=localhost;dbname=mydb";
+$user = "user12";
+$passwd = "12user";
+
+$pdo = new PDO($dsn, $user, $passwd);
+
+try {
+
+    $pdo->beginTransaction();
+    $stm = $pdo->exec("INSERT INTO countries(name, population) VALUES ('Iraq', 38274000)");
+    $stm = $pdo->exec("INSERT INTO countries(name, population) VALUES ('Uganda', 37673800)");
+
+    $pdo->commit();
+
+} catch(Exception $e) {
+
+    $pdo->rollback();
+    throw $e;
+}
+
+https://phpdelusions.net/pdo
+http://zetcode.com/php/pdo/
+https://culttt.com/2012/10/01/roll-your-own-pdo-php-class/ 
+https://www.sitepoint.com/re-introducing-pdo-the-right-way-to-access-databases-in-php/
+
+
+$params = [
+    'host' => 'localhost',
+    'user' => 'test',
+    'pwd' => 'password',
+    'db' => 'php7cookbook'
+];
+
+$dsn = sprintf('pgsql:host=%s;dbname=%s;user=%s;password=%s',
+$params['host'],
+$params['db'],
+$params['user'],
+$params['pwd']);
+
+
+$params = [
+'host' => 'localhost',
+'user' => 'test',
+'pwd' => 'password',
+'db' => 'php7cookbook',
+'sock' => '/var/run/mysqld/mysqld.sock'
+];
+
+try {
+$dsn = sprintf('mysql:host=%s;dbname=%s;unix_socket=%s',
+    $params['host'], $params['db'], $params['sock']);
+    $opts = [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION];
+    $pdo = new PDO($dsn, $params['user'], $params['pwd'], $opts);
+} catch (PDOException $e) {
+    echo $e->getMessage();
+} catch (Throwable $e) {
+    echo $e->getMessage();
+}
+
+
+$stmt = $pdo->query('SELECT * FROM customer ORDER BY id LIMIT 20');
+
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    printf('%4d | %20s | %5s' . PHP_EOL, $row['id'],
+    $row['name'], $row['level']);
+}
+
+while ($row = $stmt->fetch(PDO::FETCH_OBJ)) {
+    printf('%4d | %20s | %5s' . PHP_EOL,
+    $row->id, $row->name, $row->level);
+}
+
+
+$params = [
+'host' => 'localhost',
+'user' => 'test',
+'pwd' => 'password',
+'db' => 'php7cookbook'
+];
+
+$dsn = sprintf('mysql:host=%s;dbname=%s', $params['host'],$params['db']);
+$sql = 'THIS SQL STATEMENT WILL NOT WORK';
+
+
+$dsn = sprintf('mysql:charset=UTF8;host=%s;dbname=%s',
+$params['host'], $params['db']);
+$opts = [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION];
+$pdo = new PDO($dsn, $params['user'], $params['pwd'], $opts);
+$sql = 'SELECT * FROM customer '
+. 'WHERE balance > :min AND balance < :max '
+. 'ORDER BY id DESC
+. 'LIMIT 20';
+$stmt = $pdo->prepare($sql);
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC));
+printf('%4d | %20s | %5s | %8.2f' . PHP_EOL,
+$row['id'],
+$row['name'],
+$row['level'],
+$row['balance']);
+}
+
+
+try {
+    $pdo->beginTransaction();
+    $sql = "INSERT INTO customer ('". implode("','", $fields) . "') VALUES (?,?,?,?,?,?)";
+    $stmt = $pdo->prepare($sql);
+    foreach ($data as $row) $stmt->execute($row);
+    $pdo->commit();
+} catch (PDOException $e) {
+    error_log($e->getMessage());
+    $pdo->rollBack();
+}
+
+
+try {
+    $dsn = sprintf('mysql:host=%s;dbname=%s',
+    $params['host'], $params['db']);
+
+    $pdo = new PDO($dsn,$params['user'],$params['pwd'],
+    [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+    $sql = 'SELECT * FROM customer WHERE balance < :val AND level = :level '
+    . 'ORDER BY id LIMIT 20'; echo $sql . PHP_EOL;
+    $stmt = $pdo->prepare($sql);
+
+    $stmt->execute(['val' => 100, 'level' => 'BEG']);
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        printf('%4d | %20s | %5s | %5.2f' . PHP_EOL,
+        $row['id'], $row['name'], $row['level'], $row['balance']);
+    }
+} catch (PDOException $e) {
+    echo $e->getMessage();
+} catch (Throwable $e) {
+    echo $e->getMessage();
+}
+
+
+Boas práticas
+Use PDO::query() caso vá usar apenas uma única vez.
+Use PDO::prepare () e PDOStatement::execute() quando você precisar processar a mesma declaração várias vezes, mas usando diferentes
+valores.
+
+• PDO::PARAM_INT: Integer (whole number)
+• PDO::PARAM_LOB: Binary (such as an image, Word document, or PDF file)
+• PDO::PARAM_STR: String (text)
+• PDO::PARAM_BOOL: Boolean (true or false)
+• PDO::PARAM_NULL: Null

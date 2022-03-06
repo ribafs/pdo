@@ -1,0 +1,576 @@
+PDO - PHP Data Objects
+
+Introdução ao PDO
+
+O PDO é uma extensão do PHP para formalizar as conexões com bancos de dados criando uma interface uniforme. Isso permite que os desenvolvedores criem códigos portáteis para muitos SGBDs e plataformas. O PDO não é apenas mais uma camada de abstração como o PearDB, embora o PearDB possa usar o DOP como back-end. Aqueles que conhecem o Perls DBI podem achar a sintaxe perturbadoramente familiar.
+
+O PDO oferece suport a diversos SGBD:
+
+    CUBRID (PDO)
+    MS SQL Server (PDO)
+    Firebird (PDO)
+    IBM (PDO)
+    Informix (PDO)
+    MySQL (PDO)
+    MS SQL Server (PDO)
+    Oracle (PDO)
+    ODBC and DB2 (PDO)
+    PostgreSQL (PDO)
+    SQLite (PDO)
+    4D (PDO)
+https://www.php.net/manual/en/pdo.drivers.php
+
+Para saber que drivers teu computador suporta, execute:
+
+foreach(PDO::getAvailableDrivers() as $driver){
+    print $driver.'<br>';
+}
+
+Variáveis
+DSN - mysql:host=localhost;dbname=test;port=3306;charset=utf8mb4
+Opções
+Instanciando a PDO
+
+$host = '127.0.0.1';
+$db= 'test';
+$user = 'root';
+$pass = '';
+$port = 3306;
+$charset = 'utf8mb4';
+$dsn = "mysql:host=$host;port=$port;dbname=$db;charset=$charset";
+
+$options = [
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES   => false,
+];
+
+$pdo = new PDO($dsn, $user, $pass, $options);
+
+Execução de consultas
+
+$stmt = $pdo->query('SELECT name FROM users');
+while ($row = $stmt->fetch())
+{
+    echo $row['name'] . "\n";
+}
+
+Prepared statements. Protection from SQL injections
+
+$sql = "SELECT * FROM users WHERE email = '$email' AND status='$status'";
+
+Ao invés devemos usar:
+$sql = 'SELECT * FROM users WHERE email = ? AND status=?';
+ou
+$sql = 'SELECT * FROM users WHERE email = :email AND status=:status';
+
+SELECT
+
+$stmt = $pdo->prepare('SELECT * FROM users WHERE email = ? AND status=?');
+$stmt->execute([$email, $status]);
+$user = $stmt->fetch();
+
+// ou
+$stmt = $pdo->prepare('SELECT * FROM users WHERE email = :email AND status=:status');
+$stmt->execute(['email' => $email, 'status' =>$status]);
+$user = $stmt->fetch();
+
+Método bind
+
+$data = [
+1 => 1000,
+5 => 300,
+9 => 200,
+];
+$stmt = $pdo->prepare('UPDATE users SET bonus = bonus + ? WHERE id = ?');
+
+foreach ($data as $id => $bonus)
+{
+$stmt->execute([$bonus, $id]);
+}
+
+Update
+
+$sql = "UPDATE users SET name = ? WHERE id = ?";
+$pdo->prepare($sql)->execute([$name, $id]);
+
+Select
+$stmt = $pdo->query('SELECT name FROM users');
+foreach ($stmt as $row)
+{
+    echo $row['name'] . "\n";
+}
+
+Opções do fetch()
+
+PDO::FETCH_NUM returns enumerated array
+PDO::FETCH_ASSOC returns associative array
+PDO::FETCH_BOTH - both of the above
+PDO::FETCH_OBJ returns object
+PDO::FETCH_LAZY allows all three (numeric associative and object) methods without memory
+
+fetchColumn()
+
+// Getting the name based on id
+$stmt = $pdo->prepare("SELECT name FROM table WHERE id=?");
+$stmt->execute([$id]);
+$name = $stmt->fetchColumn();
+// getting number of rows in the table utilizi ng method chaining
+$count = $pdo->query("SELECT count(*) FROM table")->fetchColumn();
+
+
+try {
+$pdo->prepare("INSERT INTO users VALUES (NULL,?,?,?,?)")->execute($data);
+} catch (PDOException $e) {
+    $existingkey = "Integrity constraint viola tion: 1062 Duplicate entry";
+    if (strpos($e->getMessage(), $existingkey) !== FALSE) {
+        // Take some action if there is a key constraint violation, i.e. duplicate name
+    } else {
+        throw $e;
+    }
+}
+
+Retornar quantidade de registros?
+$count = $pdo->query("SELECT count(1) FROM t")->fetchColumn();
+
+LIKE
+$stmt = $pdo->prepare("SELECT * FROM table WHERE name LIKE '%?%'");
+
+$search = "%$search%";
+$stmt = $pdo->prepare("SELECT * FROM table WHERE name LIKE ?");
+$stmt->execute([$search]);
+$data = $stmt->fetchAll();
+
+LIMIT
+
+$conn->setAttribute( PDO::ATTR_EMULATE_PREPARES, false );
+$stmt = $pdo->prepare('SELECT * FROM table LIMIT ?, ?');
+$stmt->execute([$offset, $limit]);
+$data = $stmt->fetchAll();
+
+$stmt = $pdo->prepare('SELECT * FROM table LIMIT ?, ?');
+$stmt->bindParam(1, $offset,PDO::PARAM_INT);
+$stmt->bindParam(2, $limit,PDO::PARAM_INT);
+$stmt->execute();
+$data = $stmt->fetchAll();
+
+// get record starting position
+$start = (($page_no-1) * $conn->regsPerPage);
+
+//MySQL
+if($conn->sgbd == 'mysql'){
+    $results = $crud->pdo->prepare("SELECT * FROM clientes ORDER BY id LIMIT $start, $conn->regsPerPage");
+// PostgreSQL
+}else if($conn->sgbd == 'pgsql'){
+    $results = $crud->pdo->prepare("SELECT * FROM clientes ORDER BY id LIMIT $conn->regsPerPage OFFSET $start");
+}
+
+Transações
+
+beginTransaction() to start a transaction
+commit() to commit one
+rollback() to cancel all the changes you made since transaction start.
+
+try {
+    $pdo->beginTransaction();
+    $stmt = $pdo->prepare("INSERT INTO users (name) VALUES (?)");
+
+    foreach (['Joe','Ben'] as $name)
+    {
+        $stmt->execute([$name]);
+    }
+    $pdo->commit();
+}catch (Exception $e){
+    $pdo->rollback();
+    throw $e;
+}
+
+Chamando Stoted Procedure com PDO
+
+Chamar stored procedure bar()
+
+$stmt = $pdo->query("CALL bar()");
+$data = $stmt->fetchAll();
+$stmt->nextRowset();
+
+$stmt = $pdo->prepare("CALL foo()");
+$stmt->execute();
+do {
+$data = $stmt->fetchAll();
+var_dump($data);
+} while ($stmt->nextRowset() && $stmt->columnCount());
+
+$stmt = $pdo->prepare("EXEC stored_procedure ? ?");
+
+Rodando múltiplas consultas com PDO
+
+$stmt = $pdo->prepare("SELECT ?;SELECT ?");
+$stmt->execute([1,2]);
+do {
+$data = $stmt->fetchAll();
+var_dump($data);
+} while ($stmt->nextRowset());
+
+$pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, FALSE);
+$stmt = $pdo->query("SELECT * FROM Board");
+$mem = memory_get_usage();
+while($row = $stmt->fetch());
+echo "Memory used: ".round((memory_get_usage() - $mem) / 1024 / 1024, 2)."M\n";
+
+$pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, TRUE);
+$stmt = $pdo->query("SELECT * FROM Board");
+$mem = memory_get_usage();
+while($row = $stmt->fetch());
+echo "Memory used: ".round((memory_get_usage() - $mem) / 1024 / 1024, 2)."M\n";
+
+Códigos de Erro
+
+    try {
+        $insertStr = $crud->insertStr();
+
+        $sql = "INSERT INTO $table $insertStr";
+        $sth = $crud->pdo->prepare($sql);    
+
+        for($x=1;$x<$numFields;$x++){
+            $field = $crud->fieldName($x);
+		    $sth->bindParam(":$field", $_POST["$field"], PDO::PARAM_INT);
+	    }
+        $sth->execute();
+
+         print "<script>location='./index.php?table=$table';</script>";
+    } catch (Exception $e) {
+        if($e->getCode() == '22007'){
+            print '<h3>Data vazia ou inválida</h3>';
+        }
+		echo '<br><br><b>Código</b>: '.$e->getCode().'<hr><br>';
+		echo '<b>Mensagem</b>: '. $e->getMessage().'<br>';// Usar estas linhas no catch apenas em ambiente de testes/desenvolvimento
+		echo '<b>Arquivo</b>: '.$e->getFile().'<br>';
+		echo '<b>Linha</b>: '.$e->getLine().'<br>';
+		exit();
+    }
+
+MySQL
+
+$db = new PDO('mysql:host=localhost;dbname=sakila', 'user', 'pass');
+
+$sql = 'select * from countrt';
+$stmt = $db->prepare($sql);
+$stmt->execute();
+
+if($stmt->errorCode() == 0) {
+    while(($row = $stmt->fetch()) != false) {
+        echo $row['country'] . "\n";
+    }
+} else {
+    $errors = $stmt->errorInfo();
+    echo($errors[2]);
+}
+
+Código no PostgreSQL
+https://www.postgresql.org/docs/10/errcodes-appendix.html
+
+Código no SQLite
+https://www.sqlite.org/c3ref/c_abort.html
+
+Exemplos
+
+Conexão com o MySQL
+
+<?php
+$host = '127.0.0.1';
+$db   = 'cadastro';
+$user = 'root';
+$pass = '';
+$port = 3306;
+$sgbd='mysql';// pgsql, mysql
+$tabela = 'clientes';
+$dsn = "$sgbd:host=$host;port=$port;dbname=$db";
+
+$opt = [
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES   => false,
+];
+
+try {
+    $pdo = new PDO($dsn, $user, $pass, $opt);
+    /*** Mostrar somente em ambiene de testes ***/
+//    echo 'Conectado para o banco de dados<br />';
+
+    /*** close the database connection ***/
+//    $pdo = null;
+}catch(PDOException $e){
+    // Usar estas linhas no catch apenas em ambiente de testes/desenvolvimento. Em produção apenas o exit()
+	echo '<br><br><b>Código</b>: '.$e->getCode().'<hr><br>';
+	echo '<b>Mensagem</b>: '. $e->getMessage().'<br>';
+	echo '<b>Arquivo</b>: '.$e->getFile().'<br>';
+	echo '<b>Linha</b>: '.$e->getLine().'<br>';
+    /*** show the error code ***/
+    echo $pdo->errorCode();
+    echo $pdo->errorInfo();
+	exit();
+}
+
+Conexão com o SQLite
+
+try {
+    /*** connect to SQLite database ***/
+    $dbh = new PDO("sqlite:/path/to/database.sdb");
+    }
+catch(PDOException $e)
+    {
+    echo $e->getMessage();
+    }
+
+Conexão com o PostgreSQL
+
+try {
+    $db = new PDO("pgsql:dbname=pdo;host=localhost", "username", "password" );
+    echo "PDO connection object created";
+    }
+catch(PDOException $e)
+    {
+    echo $e->getMessage();
+    }
+
+Conexão para o Firebird
+
+<?php
+try {
+    $dbh = new PDO("firebird:dbname=localhost:C:\Programs\Firebird\DATABASE.FDB", "SYSDBA", "masterkey");
+    }   
+catch (PDOException $e)
+    {
+    echo $e->getMessage();
+    }
+?>
+Conexão para o Informix
+
+<?php
+try {
+    $dbh = new PDO("informix:DSN=InformixDB", "username", "password");
+    }
+catch (PDOException $e)
+    {
+    echo $e->getMessage();
+    }
+?>
+
+Conexão para o Oracle
+
+<?php
+try {
+    $dbh = new PDO("OCI:", "username", "password")
+    }
+catch (PDOException $e)
+    {
+    echo $e->getMessage();
+    }
+?>
+
+Conectar para o ODBC
+
+<?php
+try {
+    $dbh = new PDO("odbc:Driver={Microsoft Access Driver (*.mdb)};Dbq=C:\accounts.mdb;Uid=Admin");
+    }
+catch (PDOException $e)
+    {
+    echo $e->getMessage();
+    } 
+?>
+
+Conectar para o DBLIB
+Once again a Windows specific database, DBLIB can be used as follows 
+<?php
+try {
+    $hostname = "localhost";
+    $port     = 10060;
+    $dbname   = "my_database";
+    $username = "username";
+    $password = "password";
+
+    $dbh = new PDO ("dblib:host=$hostname:$port;dbname=$dbname","$username","$password");
+    }
+catch (PDOException $e)
+    {
+    echo $e->getMessage();
+    }
+?>
+
+Conctar para o IBM
+This example shows connecting to an IBM DB2 database named accounts 
+<?php
+try {
+    $db = new PDO("ibm:DRIVER={IBM DB2 ODBC DRIVER};DATABASE=accounts; HOSTNAME=1.2.3,4;PORT=56789;PROTOCOL=TCPIP;", "username", "password");
+    }
+catch (PDOException $e)
+    {
+    echo $e->getMessage();
+    }
+?>
+
+Exemplos de cnexão encontrados no ótimo site:
+https://www.phpro.org/tutorials/Introduction-to-PHP-PDO.html
+
+Select
+
+require_once('conexao.php');
+
+try{
+    $stmte = $pdo->query("SELECT * FROM $tabela order by nome");
+    $executa = $stmte->execute();
+?>
+
+    <table border="2" align="center">
+    <tr><td><b>ID</td><td><b>Nome</td><td><b>Email</td><td><b>Nascimento</td><td><b>CPF</td><td colspan="2" align="center">Ação</td></tr>
+
+<?php
+    if($executa){
+        while($reg = $stmte->fetch(PDO::FETCH_OBJ)){ // Para recuperar um ARRAY utilize PDO::FETCH_ASSOC 
+?>
+            <tr><td><?=$reg->id?></td>
+            <td><?=$reg->nome?></td>
+            <td><?=$reg->email?></td>
+            <td><?=$reg->data_nasc?></td>
+            <td><?=$reg->cpf?></td>
+            <td><a href="update.php?id=<?=$reg->id?>">Editar</a></td>
+            <td><a href="delete.php?id=<?=$reg->id?>">Excluir</a></td></tr>
+<?php
+       }
+       print '</table>';
+    }else{
+           echo 'Erro ao inserir os dados';
+    }
+}catch(PDOException $e){
+      echo $e->getMessage();
+}
+
+Insert
+
+require_once('conexao.php');
+// Vindos de um form
+if(isset($_POST['enviar'])){
+$nome = $_POST['nome'];
+$email = $_POST['email'];
+$data_nasc = $_POST['data_nasc'];
+$cpf = $_POST['cpf'];
+
+   try{
+       $stmte = $pdo->prepare("INSERT INTO clientes(nome,email,data_nasc,cpf) VALUES (?, ?, ?, ?)");
+       $stmte->bindParam(1, $nome , PDO::PARAM_STR);
+       $stmte->bindParam(2, $email , PDO::PARAM_STR);
+       $stmte->bindParam(3, $data_nasc , PDO::PARAM_STR);
+       $stmte->bindParam(4, $cpf , PDO::PARAM_STR);
+       $executa = $stmte->execute();
+ 
+       if($executa){
+           echo 'Dados inseridos com sucesso';
+		   header('location: index.php');
+       }
+       else{
+           echo 'Erro ao inserir os dados';
+       }
+   }
+   catch(PDOException $e){
+      echo $e->getMessage();
+   }
+}
+
+Delete
+
+if(isset($_POST['enviar'])){
+// Vindo de um form
+$id = $_POST['id'];
+    $sql = "DELETE FROM  $tabela WHERE id = :id";
+    $sth = $pdo->prepare($sql);
+    $sth->bindParam(':id', $id, PDO::PARAM_INT);   
+    if( $sth->execute()){
+        print "<script>alert('Registro excluído com sucesso!');location='index.php';</script>";
+    }else{
+        print "Erro ao exclur o registro!<br><br>";
+    }
+}
+
+Update
+
+if(isset($_POST['enviar'])){
+    $id = $_POST['id'];
+    $nome = $_POST['nome'];
+    $email = $_POST['email'];
+    $data_nasc = $_POST['data_nasc'];
+    $cpf = $_POST['cpf'];
+
+    $sql = "UPDATE $tabela SET nome = :nome, email=:email, data_nasc=:data_nasc, cpf=:cpf WHERE id = :id";
+    $sth = $pdo->prepare($sql);
+    $sth->bindParam(':id', $_POST['id'], PDO::PARAM_INT);   
+    $sth->bindParam(':nome', $_POST['nome'], PDO::PARAM_INT);   
+    $sth->bindParam(':email', $_POST['email'], PDO::PARAM_INT);   
+    $sth->bindParam(':data_nasc', $_POST['data_nasc'], PDO::PARAM_INT);   
+    $sth->bindParam(':cpf', $_POST['cpf'], PDO::PARAM_INT);   
+
+   if($sth->execute()){
+        print "<script>alert('Registro alterado com sucesso!');location='index.php';</script>";
+    }else{
+        print "Erro ao editar o registro!<br><br>";
+    }
+}
+
+    /*** reassign the animal_id ***/
+    $animal_id = 7;
+    $animal_name = 'bruce';
+
+    /*** execute the prepared statement ***/
+    $stmt->execute();
+
+    /*** loop over the results ***/
+    while($row = $stmt->fetch())
+        {
+        echo $row['animal_id'].'<br />';
+        echo $row['animal_type'].'<br />';
+        echo $row['animal_name'].'<br />';
+        }
+
+Receber último id inserido
+
+    /*** set the error reporting attribute ***/
+    $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    /*** INSERT a new row ***/
+    $dbh->exec("INSERT INTO animals(animal_type, animal_name) VALUES ('galah', 'polly')");
+
+    /*** display the id of the last INSERT ***/
+    echo $dbh->lastInsertId();
+
+    /*** close the database connection ***/
+    $dbh = null;
+
+Erros
+
+}catch (PDOException $e){
+ echo "Error!: " . $e->getMessage() . "<br/>";
+ die();
+ }
+
+}catch (PDOException $e) 
+{
+echo "Error : " . $e->getMessage() . "<br/>";
+die();
+}
+$stmt = $conn->prepare('SELECT fname, tname FROM user_details');
+$stmt->execute();
+print_r ($stmt->errorInfo());
+
+Lista de parâmetros - https://www.php.net/manual/en/pdo.constants.php
+
+Alguns:
+ PDO::PARAM_BOOL (integer)
+    Represents a boolean data type. 
+ PDO::PARAM_NULL (integer)
+    Represents the SQL NULL data type. 
+PDO::PARAM_INT (integer)
+    Represents the SQL INTEGER data type. 
+PDO::PARAM_STR (integer)
+    Represents the SQL CHAR, VARCHAR, or other string data type. 
+PDO::PARAM_STR, 12
+

@@ -1,0 +1,27 @@
+Temos uma listagem com registros de uma tabela relacionada com outra
+Exemplo: vendas que listas produtos vendidos. Neste caso aparecem os IDs dos produtos
+E gostaria de mostrar a descrição de cada produto ao in vés do ID
+
+$results = $pdo->prepare("SELECT id,produto_id,quantidade,data,preco FROM vendas ORDER BY id");
+$results->execute();
+
+while($row = $results->fetch(PDO::FETCH_ASSOC)) {
+    // Trazer a descrição do produto atual
+    $sql = 'select descricao from produtos where id = '.$row['produto_id'];
+    $stm = $pdo->query($sql);
+    $produto = $stm->fetch(PDO::FETCH_OBJ);
+
+    echo "<tr>" . 
+    "<td>" . $row['id'] . "</td>" . 
+    "<td>" . $produto->descricao . "</td>".
+    "<td>" . $row['quantidade'] . "</td>" .
+    "<td>" . $row['data'] . "</td>" . 
+    "<td>" . $row['preco'] . "</td>";
+		?>
+	    <td><a href="update.php?id=<?=$row['id']?>"><i class="glyphicon glyphicon-edit" title="Editar"></a></td>
+	    <td><a onclick="return confirm('Tem certeza de que deseja excluir este cliente ?')" href="delete.php?id=<?=$row['id']?>"><i class="glyphicon glyphicon-remove-circle" title="Excluir"></i></a></td>
+<?php
+print "
+    </tr>";
+}
+

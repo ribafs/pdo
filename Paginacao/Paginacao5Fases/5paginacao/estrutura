@@ -1,0 +1,8 @@
+root
+|__css
+|    |___ bootstrap.min.css
+|
+|__js
+    |___ bootstrap.min.js
+    |___ jquery-1.10.2.js
+    |___ jquery.bootpag.min.js

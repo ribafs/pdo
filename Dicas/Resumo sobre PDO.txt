@@ -1,0 +1,64 @@
+Resumo sobre PDO
+
+==Conexão
+
+class pdoSimples{
+	private $host = 'localhost';
+	private $dbname = 'cliente';
+	private $user = 'root';
+	private $pass = '';
+	private $DBH;
+	private $STH;
+
+	public function __construct(){
+		try {
+		  $this->DBH = new PDO("mysql:host=".$this->host.";dbname=".$this->dbname,$this->user,$this->pass);
+		  $this->DBH->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
+		} catch(PDOException $e) {
+			echo 'Erro: '.$e->getMessage();
+		}
+	}
+
+== Insert
+
+	public function insert($nome,$email){
+		$STH = $this->DBH->prepare("INSERT INTO clientes (nome,email) VALUES (:nome,:email)");
+		$STH->execute(array(':nome'=>$nome,':email'=>$email));
+	}
+
+== Update
+	function update($id,$nome,$email){
+		$STH = $this->DBH->prepare("UPDATE clientes SET nome=:nome,email=:email WHERE id=:id");
+		$STH->execute(array(':id'=>$id,':nome'=>$nome,':email'=>$email));
+	}
+
+== Select
+	public function select(){
+		$sql="SELECT * FROM clientes";
+		$q = $this->DBH->query($sql) or die("failed!");
+		
+		while($r = $q->fetch(PDO::FETCH_ASSOC)){
+			$data[]=$r;
+		}
+		return $data;
+	}
+
+== SelectOne
+	public function selectOne($id){
+		$sql="SELECT * FROM clientes WHERE id = :id";
+		$q = $this->DBH->prepare($sql);
+
+		$q->execute(array(':id'=>$id));
+		$data = $q->fetch(PDO::FETCH_ASSOC);
+		return $data;
+	}
+
+== Delete
+	public function delete($id){
+		$sql="DELETE FROM clientes WHERE id=:id";
+		$q = $this->DBH->prepare($sql);
+		$q->execute(array(':id'=>$id));
+		return true;
+	}
+}
+

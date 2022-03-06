@@ -1,0 +1,62 @@
+PDO has three error handling modes.
+
+    PDO::ERRMODE_SILENT acts like mysql_* where you must check each result and then look at $db->errorInfo(); to get the error details.
+    PDO::ERRMODE_WARNING throws PHP Warnings
+    PDO::ERRMODE_EXCEPTION throws PDOException. In my opinion this is the mode you should use. It acts very much like or die(mysql_error()); when it isn't caught, but unlike or die() the PDOException can be caught and handled gracefully if you choose to do so.
+
+<?php
+try {
+    //connect as appropriate as above
+    $db->query('hi'); //invalid query!
+} catch(PDOException $ex) {
+    echo "An Error occured!"; //user friendly message
+    some_logging_function($ex->getMessage());
+}
+
+$dbh->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
+
+Em desenvolvimento:
+
+ini_set('display_errors', 1);
+
+Em produção
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+
+try {
+    $pdo->prepare("INSERT INTO users VALUES (NULL,?,?,?,?)")->execute($data);
+} catch (PDOException $e) {
+    $existingkey = "Integrity constraint violation: 1062 Duplicate entry";
+    if (strpos($e->getMessage(), $existingkey) !== FALSE) {
+        // Take some action if there is a key constraint violation, i.e. duplicate name
+    } else {
+        throw $e;
+    }
+}
+
+
+Tratamento de erro para quando o registro já existe:
+
+if($e->getCode == 23000{
+	print 'Registro já existe';
+}
+
+	function executeDML($sql, $arrayParametros, $conn)
+	{
+	   //echo "<pre>SQL= " .$sql. "</pre>";
+	   //echo "<br>" . var_dump($this->conn);
+	    try{
+		$stmt = $conn->prepare($sql);
+		
+		for($i=0; $i<sizeof($arrayParametros); $i++)
+		{
+		    $stmt->bindParam($i+1, $arrayParametros[$i]);
+		}
+		$stmt->execute();
+		
+		}catch(PDOException $e) {
+		   echo $e->getMessage();
+		}
+	}
+
+

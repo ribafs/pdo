@@ -1,0 +1,5 @@
+Suporta uma tabela de 1 milhão de registros.
+Usar script de um milhão
+
+Créditos
+https://www.codeofaninja.com/2014/06/php-object-oriented-crud-example-oop.html

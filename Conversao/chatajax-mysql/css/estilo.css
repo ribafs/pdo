@@ -1,0 +1,30 @@
+.campo{
+	color:#333;
+	background:#fff;
+	padding:10px;
+	border:1px solid #aaa;
+}
+
+.boton{
+	color:#fff;
+	background: #08f;
+	padding:10px;
+	border-radius: 4px;
+	border:1px solid #08f;
+	cursor: pointer;
+}
+
+a{
+	color:#08f;
+	text-decoration: none;
+}
+
+#mensajes{
+	background: #eee;
+	color:#333;
+	height:500px;
+	overflow-y:scroll;
+}
+#enviar{
+	background: #afa;
+}

@@ -1,0 +1,24 @@
+    try {
+        $insertStr = $crud->insertStr();
+
+        $sql = "INSERT INTO $table $insertStr";
+        $sth = $crud->pdo->prepare($sql);    
+
+        for($x=1;$x<$numFields;$x++){
+            $field = $crud->fieldName($x);
+		    $sth->bindParam(":$field", $_POST["$field"], PDO::PARAM_INT);
+	    }
+        $sth->execute();
+
+         print "<script>location='./index.php?table=$table';</script>";
+    } catch (Exception $e) {
+        if($e->getCode() == '22007'){
+            print '<h3>Data vazia ou inválida</h3>';
+        }
+		echo '<br><br><b>Código</b>: '.$e->getCode().'<hr><br>';
+		echo '<b>Mensagem</b>: '. $e->getMessage().'<br>';// Usar estas linhas no catch apenas em ambiente de testes/desenvolvimento
+		echo '<b>Arquivo</b>: '.$e->getFile().'<br>';
+		echo '<b>Linha</b>: '.$e->getLine().'<br>';
+		exit();
+    }
+
